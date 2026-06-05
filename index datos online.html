@@ -1,0 +1,1958 @@
+<!
+// Exponer defaults globalmente para Firebase
+window.DEFAULT_HISTORIA = DEFAULT_HISTORIA;
+window.DEFAULT_TRAMAS   = DEFAULT_TRAMAS;
+window.DEFAULT_IDEAS    = DEFAULT_IDEAS;
+window.DEFAULT_CLANES   = DEFAULT_CLANES;
+window.DEFAULT_TECNICAS = DEFAULT_TECNICAS;
+DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#c9a84c;--gold2:#e8c97a;--dark:#0d0b08;--dark2:#151210;--dark3:#1e1a14;
+  --red:#8b1a1a;--red2:#c0392b;--parchment:#f5e6c8;--parchment2:#e8d5a3;
+  --border:#3a2d1a;--glow:rgba(201,168,76,0.3);--text:#d4b896;--text2:#f0e0c0;
+}
+body{background:var(--dark);font-family:'IM Fell English',serif;color:var(--text);overflow-x:hidden;cursor:default;min-height:100vh}
+
+/* Fondo animado con partículas */
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* Runas flotantes */
+.runa{position:fixed;font-size:1.5rem;color:rgba(201,168,76,0.08);animation:floatRuna linear infinite;pointer-events:none;z-index:1;font-family:'Cinzel',serif}
+@keyframes floatRuna{from{transform:translateY(100vh) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:1}to{transform:translateY(-100px) rotate(360deg);opacity:0}}
+
+/* Wrapper principal */
+#app{position:relative;z-index:2;min-height:100vh}
+
+/* ===== PANTALLA DE INICIO ===== */
+#home-screen{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2rem;text-align:center;position:relative
+}
+.home-border{
+  position:absolute;top:20px;left:20px;right:20px;bottom:20px;
+  border:1px solid var(--gold);opacity:0.3;pointer-events:none;
+  animation:borderPulse 3s ease-in-out infinite
+}
+@keyframes borderPulse{0%,100%{opacity:0.2;box-shadow:inset 0 0 20px var(--glow)}50%{opacity:0.5;box-shadow:inset 0 0 50px var(--glow)}}
+
+.corner-ornament{position:absolute;width:60px;height:60px;border-color:var(--gold);border-style:solid;opacity:0.6}
+.corner-ornament.tl{top:20px;left:20px;border-width:2px 0 0 2px}
+.corner-ornament.tr{top:20px;right:20px;border-width:2px 2px 0 0}
+.corner-ornament.bl{bottom:20px;left:20px;border-width:0 0 2px 2px}
+.corner-ornament.br{bottom:20px;right:20px;border-width:0 2px 2px 0}
+
+.home-sigil{font-size:5rem;animation:sigilPulse 4s ease-in-out infinite;filter:drop-shadow(0 0 20px var(--gold));margin-bottom:1rem;display:block}
+@keyframes sigilPulse{0%,100%{transform:scale(1) rotate(-2deg);filter:drop-shadow(0 0 15px var(--gold))}50%{transform:scale(1.05) rotate(2deg);filter:drop-shadow(0 0 40px var(--gold2))}}
+
+.home-title{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(3rem,8vw,7rem);
+  color:var(--gold);font-weight:900;line-height:1;
+  animation:titleReveal 2s ease forwards;
+  text-shadow:0 0 30px var(--glow),0 0 60px rgba(201,168,76,0.2);
+  letter-spacing:0.1em
+}
+@keyframes titleReveal{from{opacity:0;transform:translateY(-30px) scale(0.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.home-subtitle{
+  font-family:'Cinzel',serif;font-size:1rem;color:var(--parchment2);
+  letter-spacing:0.5em;text-transform:uppercase;margin:1rem 0 0.5rem;
+  opacity:0;animation:fadeUp 1s ease 0.8s forwards
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.home-divider{
+  width:300px;height:2px;margin:1.5rem auto;position:relative;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;animation:fadeUp 1s ease 1.2s forwards
+}
+.home-divider::before,.home-divider::after{
+  content:'✦';position:absolute;top:50%;transform:translateY(-50%);
+  color:var(--gold);font-size:1rem
+}
+.home-divider::before{left:-20px}
+.home-divider::after{right:-20px}
+
+.home-tagline{
+  font-style:italic;font-size:1.1rem;color:var(--text);max-width:600px;
+  line-height:1.8;opacity:0;animation:fadeUp 1s ease 1.6s forwards;margin-bottom:3rem
+}
+
+/* Grid de secciones */
+.sections-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:1rem;width:100%;max-width:900px;
+  opacity:0;animation:fadeUp 1s ease 2s forwards
+}
+
+.section-btn{
+  background:var(--dark3);border:1px solid var(--border);
+  padding:1.5rem 1rem;border-radius:4px;cursor:pointer;
+  transition:all 0.4s cubic-bezier(0.23,1,0.32,1);position:relative;overflow:hidden;
+  text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.7rem
+}
+.section-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--gold),transparent);
+  opacity:0;transition:opacity 0.4s
+}
+.section-btn::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  transform:scaleX(0);transition:transform 0.4s
+}
+.section-btn:hover{
+  border-color:var(--gold);transform:translateY(-4px);
+  box-shadow:0 8px 30px rgba(201,168,76,0.2)
+}
+.section-btn:hover::before{opacity:0.05}
+.section-btn:hover::after{transform:scaleX(1)}
+.section-btn:active{transform:translateY(-2px) scale(0.98)}
+
+.btn-icon{font-size:2rem;filter:drop-shadow(0 0 8px var(--glow));
+  transition:transform 0.4s;display:block}
+.section-btn:hover .btn-icon{transform:scale(1.2) rotate(10deg)}
+.btn-label{font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold);
+  letter-spacing:0.1em;text-transform:uppercase;font-weight:600}
+.btn-desc{font-size:0.7rem;color:var(--text);font-style:italic;line-height:1.4}
+
+/* ===== SECCIONES INTERNAS ===== */
+.section-page{display:none;min-height:100vh;padding:2rem 1.5rem;position:relative}
+.section-page.active{display:block;animation:pageEnter 0.6s ease forwards}
+@keyframes pageEnter{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+.page-header{
+  display:flex;align-items:center;gap:1rem;margin-bottom:2.5rem;padding-bottom:1.5rem;
+  border-bottom:1px solid var(--border);position:relative
+}
+.page-header::after{
+  content:'';position:absolute;bottom:-1px;left:0;width:100px;height:2px;
+  background:linear-gradient(90deg,var(--gold),transparent)
+}
+.back-btn{
+  background:none;border:1px solid var(--border);color:var(--gold);
+  padding:0.5rem 1rem;font-family:'Cinzel',serif;font-size:0.75rem;
+  cursor:pointer;border-radius:3px;transition:all 0.3s;letter-spacing:0.1em;
+  white-space:nowrap
+}
+.back-btn:hover{border-color:var(--gold);background:rgba(201,168,76,0.1);
+  box-shadow:0 0 15px rgba(201,168,76,0.2)}
+
+.page-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.5rem,4vw,2.5rem);
+  color:var(--gold);text-shadow:0 0 20px var(--glow)}
+
+/* Contenido editable */
+.editable-block{
+  background:var(--dark3);border:1px solid var(--border);border-radius:4px;
+  padding:1.5rem;margin-bottom:1.5rem;position:relative;transition:all 0.3s
+}
+.editable-block:hover{border-color:rgba(201,168,76,0.3)}
+.editable-block h3{font-family:'Cinzel',serif;color:var(--gold);font-size:1rem;
+  margin-bottom:1rem;letter-spacing:0.1em;text-transform:uppercase}
+.editable-block p,.editable-block [contenteditable]{
+  color:var(--text2);line-height:1.9;font-size:0.95rem;outline:none;
+  min-height:60px;transition:background 0.3s;border-radius:3px;padding:4px
+}
+.editable-block [contenteditable]:focus{background:rgba(201,168,76,0.05);
+  box-shadow:0 0 0 1px rgba(201,168,76,0.2)}
+.edit-hint{position:absolute;top:0.5rem;right:0.5rem;font-size:0.65rem;
+  color:var(--gold);opacity:0;transition:opacity 0.3s;font-family:'Cinzel',serif;
+  letter-spacing:0.05em}
+.editable-block:hover .edit-hint{opacity:0.6}
+
+/* ===== SECCIÓN PERSONAJES ===== */
+#chars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+.char-card{
+  background:var(--dark3);border:1px solid var(--border);border-radius:4px;
+  padding:1.25rem 1rem;cursor:pointer;text-align:center;
+  transition:all 0.4s cubic-bezier(0.23,1,0.32,1);position:relative;overflow:hidden
+}
+.char-card::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:100%;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  transform:scaleX(0);transition:transform 0.4s
+}
+.char-card:hover{transform:translateY(-6px);border-color:var(--gold);
+  box-shadow:0 10px 40px rgba(201,168,76,0.15)}
+.char-card:hover::before{transform:scaleX(1)}
+.char-avatar{
+  width:70px;height:70px;border-radius:50%;border:2px solid var(--border);
+  margin:0 auto 0.8rem;display:flex;align-items:center;justify-content:center;
+  font-size:2rem;background:var(--dark2);transition:all 0.4s;position:relative
+}
+.char-card:hover .char-avatar{border-color:var(--gold);box-shadow:0 0 20px var(--glow)}
+.char-avatar::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid var(--gold);opacity:0;transition:opacity 0.4s
+}
+.char-card:hover .char-avatar::after{opacity:0.3;animation:avatarSpin 4s linear infinite}
+@keyframes avatarSpin{to{transform:rotate(360deg)}}
+.char-name{font-family:'Cinzel',serif;color:var(--gold);font-size:0.9rem;
+  font-weight:600;letter-spacing:0.05em;margin-bottom:0.3rem}
+.char-role{font-size:0.75rem;color:var(--text);font-style:italic}
+.char-type-badge{
+  display:inline-block;font-size:0.6rem;font-family:'Cinzel',serif;
+  letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:2px;
+  margin-top:0.5rem
+}
+.badge-principal{background:rgba(139,26,26,0.3);color:#e88;border:1px solid rgba(139,26,26,0.5)}
+.badge-secundario{background:rgba(42,62,80,0.3);color:#8ab;border:1px solid rgba(42,62,80,0.5)}
+
+/* Vista detalle personaje */
+#char-detail{display:none}
+#char-detail.active{display:block;animation:pageEnter 0.5s ease}
+
+.char-detail-header{display:flex;align-items:center;gap:1rem;margin-bottom:2rem}
+.char-detail-avatar{
+  width:90px;height:90px;border-radius:50%;border:2px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;font-size:3rem;
+  background:var(--dark2);box-shadow:0 0 30px var(--glow);flex-shrink:0
+}
+.char-detail-name{font-family:'Cinzel Decorative',serif;font-size:2rem;color:var(--gold);
+  text-shadow:0 0 20px var(--glow)}
+.char-detail-role{font-style:italic;color:var(--text);margin-top:0.3rem}
+
+/* Área de imagen interactiva */
+.char-viewer{
+  background:var(--dark2);border:1px solid var(--border);border-radius:6px;
+  padding:2rem;margin:1.5rem 0;position:relative;min-height:380px;
+  display:flex;align-items:center;justify-content:center;overflow:visible
+}
+.char-image-area{
+  position:relative;width:240px;height:340px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0
+}
+.char-silhouette{
+  font-size:8rem;line-height:1;text-align:center;
+  filter:drop-shadow(0 0 15px var(--glow));
+  transition:all 0.4s ease;cursor:default;
+  position:relative;z-index:1
+}
+/* Imagen del personaje */
+.char-uploaded-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:contain;border-radius:4px;
+  filter:drop-shadow(0 0 20px var(--glow));
+  transition:opacity 0.4s ease;z-index:2
+}
+/* Zona de subida de imagen */
+.img-upload-zone{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:0.5rem;
+  border:2px dashed var(--border);border-radius:6px;cursor:pointer;
+  transition:all 0.3s;background:rgba(13,11,8,0.6);z-index:4
+}
+.img-upload-zone:hover{border-color:var(--gold);background:rgba(201,168,76,0.05)}
+.img-upload-zone .upload-icon{font-size:2.2rem;opacity:0.5}
+.img-upload-zone .upload-text{font-family:'Cinzel',serif;font-size:0.62rem;color:var(--gold);
+  opacity:0.6;letter-spacing:0.1em;text-align:center;padding:0 0.5rem}
+.img-upload-zone input[type=file]{display:none}
+.img-upload-zone.has-image{border:none;background:transparent;pointer-events:none}
+/* Botones de control del viewer */
+.viewer-controls{
+  position:absolute;top:0.5rem;right:0.5rem;display:flex;gap:0.4rem;z-index:20;flex-wrap:wrap;justify-content:flex-end;max-width:180px
+}
+.viewer-ctrl-btn{
+  background:rgba(13,11,8,0.9);border:1px solid var(--border);color:var(--gold);
+  font-size:0.62rem;font-family:'Cinzel',serif;letter-spacing:0.04em;
+  padding:0.28rem 0.55rem;border-radius:3px;cursor:pointer;transition:all 0.2s;white-space:nowrap
+}
+.viewer-ctrl-btn:hover{border-color:var(--gold);background:rgba(201,168,76,0.12)}
+.viewer-ctrl-btn.active{border-color:var(--gold);color:var(--gold2);background:rgba(201,168,76,0.15)}
+.viewer-ctrl-btn.danger{border-color:var(--red2);color:#e88}
+.viewer-ctrl-btn.danger:hover{background:rgba(139,26,26,0.2)}
+/* Hotspots arrastrables */
+.hotspot.draggable{cursor:grab}
+.hotspot.draggable:active{cursor:grabbing}
+/* Panel edición hotspot */
+.hotspot-edit-panel{
+  position:absolute;background:var(--dark);border:1px solid var(--gold);
+  border-radius:6px;padding:0.9rem;z-index:50;width:210px;
+  box-shadow:0 8px 40px rgba(201,168,76,0.25);
+  animation:panelPop 0.25s cubic-bezier(0.23,1,0.32,1)
+}
+.hotspot-edit-panel label{
+  display:block;font-family:'Cinzel',serif;font-size:0.62rem;color:var(--gold);
+  letter-spacing:0.08em;margin-bottom:0.2rem;margin-top:0.55rem
+}
+.hotspot-edit-panel label:first-of-type{margin-top:0}
+.hotspot-edit-panel input,.hotspot-edit-panel textarea{
+  width:100%;background:var(--dark2);border:1px solid var(--border);
+  color:var(--text2);padding:0.3rem 0.45rem;border-radius:3px;
+  font-family:'IM Fell English',serif;font-size:0.8rem;outline:none;
+  transition:border-color 0.2s;resize:vertical
+}
+.hotspot-edit-panel input:focus,.hotspot-edit-panel textarea:focus{border-color:var(--gold)}
+.hotspot-edit-panel .panel-actions{display:flex;gap:0.4rem;margin-top:0.7rem}
+.hotspot-edit-panel .panel-actions button{flex:1;font-size:0.62rem;padding:0.3rem 0.45rem}
+/* Modo añadir hotspot */
+.char-image-area.adding-hotspot{cursor:crosshair !important}
+.char-image-area.adding-hotspot .hotspot{pointer-events:none}
+.add-hs-hint{
+  position:absolute;bottom:-1.8rem;left:50%;transform:translateX(-50%);
+  font-family:'Cinzel',serif;font-size:0.62rem;color:var(--gold);
+  white-space:nowrap;opacity:0.8;animation:blink 1s ease-in-out infinite
+}
+@keyframes blink{0%,100%{opacity:0.4}50%{opacity:1}}
+.char-view-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(13,11,8,0.8);border:1px solid var(--border);
+  color:var(--gold);font-size:1.2rem;cursor:pointer;
+  padding:0.5rem 0.7rem;border-radius:3px;transition:all 0.3s;z-index:5
+}
+.char-view-nav:hover{border-color:var(--gold);background:rgba(201,168,76,0.1)}
+.char-view-nav.prev{left:0.5rem}
+.char-view-nav.next{right:0.5rem}
+
+.view-label{
+  position:absolute;bottom:0.5rem;left:50%;transform:translateX(-50%);
+  font-family:'Cinzel',serif;font-size:0.65rem;color:var(--gold);
+  letter-spacing:0.15em;text-transform:uppercase;opacity:0.7
+}
+
+/* Puntos interactivos (hotspots) */
+.hotspot{
+  position:absolute;cursor:pointer;z-index:10;
+  transition:transform 0.3s
+}
+.hotspot:hover{transform:scale(1.2)}
+.hotspot-dot{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(13,11,8,0.85);border:2px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.85rem;box-shadow:0 0 10px var(--glow);
+  animation:dotPulse 2s ease-in-out infinite;transition:all 0.3s
+}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 8px var(--glow)}50%{box-shadow:0 0 20px var(--glow),0 0 40px rgba(201,168,76,0.2)}}
+.hotspot:hover .hotspot-dot{background:rgba(201,168,76,0.2);border-color:var(--gold2)}
+.hotspot-line{
+  position:absolute;background:var(--gold);opacity:0.5;
+  transform-origin:0 50%;z-index:9;pointer-events:none
+}
+
+/* Panel de info del hotspot */
+.hotspot-panel{
+  position:absolute;background:var(--dark);border:1px solid var(--gold);
+  border-radius:4px;padding:1rem;z-index:20;width:200px;
+  box-shadow:0 5px 30px rgba(201,168,76,0.2);
+  animation:panelPop 0.3s cubic-bezier(0.23,1,0.32,1)
+}
+@keyframes panelPop{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+.hotspot-panel h4{font-family:'Cinzel',serif;color:var(--gold);font-size:0.8rem;
+  margin-bottom:0.5rem;letter-spacing:0.05em}
+.hotspot-panel p{font-size:0.75rem;color:var(--text2);line-height:1.6}
+.close-panel{position:absolute;top:0.3rem;right:0.5rem;background:none;border:none;
+  color:var(--gold);cursor:pointer;font-size:0.9rem;opacity:0.6}
+.close-panel:hover{opacity:1}
+
+/* Tabs del personaje */
+.char-tabs{display:flex;gap:0.5rem;margin:1.5rem 0 1rem;border-bottom:1px solid var(--border);padding-bottom:0}
+.char-tab{
+  background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--text);font-family:'Cinzel',serif;font-size:0.75rem;
+  letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;
+  cursor:pointer;transition:all 0.3s;margin-bottom:-1px
+}
+.char-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.char-tab:hover:not(.active){color:var(--parchment2)}
+.char-tab-content{display:none}
+.char-tab-content.active{display:block;animation:fadeUp 0.3s ease}
+
+/* Accesorios */
+.accessories-grid{display:flex;flex-wrap:wrap;gap:0.75rem}
+.accessory-item{
+  background:var(--dark3);border:1px solid var(--border);border-radius:3px;
+  padding:0.75rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer;
+  transition:all 0.3s;min-width:150px
+}
+.accessory-item:hover{border-color:var(--gold);box-shadow:0 0 15px rgba(201,168,76,0.1)}
+.acc-icon{font-size:1.5rem}
+.acc-name{font-family:'Cinzel',serif;font-size:0.75rem;color:var(--gold)}
+.acc-desc{font-size:0.7rem;color:var(--text);font-style:italic}
+
+/* ===== IDEAS grid ===== */
+.ideas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.idea-card{
+  background:var(--dark3);border:1px solid var(--border);border-radius:4px;
+  padding:1.25rem;transition:all 0.4s;position:relative;overflow:hidden
+}
+.idea-card::after{
+  content:'';position:absolute;top:0;right:0;width:0;height:0;
+  border-style:solid;border-width:0 30px 30px 0;
+  border-color:transparent var(--border) transparent transparent;transition:border-color 0.3s
+}
+.idea-card:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-3px);
+  box-shadow:0 8px 25px rgba(201,168,76,0.1)}
+.idea-card:hover::after{border-color:transparent var(--gold) transparent transparent}
+.idea-title{font-family:'Cinzel',serif;color:var(--gold);font-size:0.85rem;
+  font-weight:600;margin-bottom:0.75rem;letter-spacing:0.05em}
+.idea-body{font-size:0.85rem;color:var(--text2);line-height:1.8;font-style:italic;
+  outline:none;min-height:60px}
+.idea-body:focus{background:rgba(201,168,76,0.03);border-radius:3px}
+
+/* ===== TÉCNICAS ===== */
+.tecnicas-list{display:flex;flex-direction:column;gap:1rem}
+.tecnica-item{
+  background:var(--dark3);border-left:3px solid var(--red);border-radius:0 4px 4px 0;
+  padding:1.25rem 1.5rem;transition:all 0.3s;cursor:pointer;position:relative
+}
+.tecnica-item:hover{border-left-color:var(--gold);background:rgba(201,168,76,0.03)}
+.tecnica-item.expanded{border-left-color:var(--gold)}
+.tecnica-name{font-family:'Cinzel',serif;color:var(--gold);font-size:0.95rem;
+  font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.tecnica-chevron{transition:transform 0.3s;font-size:0.8rem;color:var(--gold)}
+.tecnica-item.expanded .tecnica-chevron{transform:rotate(180deg)}
+.tecnica-owner{font-size:0.75rem;color:var(--text);font-style:italic;margin:0.3rem 0 0}
+.tecnica-desc{max-height:0;overflow:hidden;transition:max-height 0.5s ease;
+  color:var(--text2);font-size:0.9rem;line-height:1.8}
+.tecnica-item.expanded .tecnica-desc{max-height:300px;padding-top:1rem}
+
+/* ===== CLANES ===== */
+.clanes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem}
+.clan-card{
+  background:var(--dark3);border:1px solid var(--border);border-radius:6px;
+  padding:1.5rem;transition:all 0.4s;position:relative;overflow:hidden
+}
+.clan-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--red),var(--gold),var(--red));
+  opacity:0;transition:opacity 0.4s
+}
+.clan-card:hover{border-color:rgba(201,168,76,0.3);transform:translateY(-4px);
+  box-shadow:0 10px 35px rgba(0,0,0,0.3)}
+.clan-card:hover::before{opacity:1}
+.clan-symbol{font-size:3rem;margin-bottom:1rem;display:block;text-align:center;
+  filter:drop-shadow(0 0 10px var(--glow))}
+.clan-name{font-family:'Cinzel Decorative',serif;color:var(--gold);font-size:1.2rem;
+  text-align:center;margin-bottom:1rem}
+.clan-desc{font-size:0.85rem;color:var(--text2);line-height:1.8;font-style:italic;
+  outline:none;min-height:80px}
+
+/* ===== HISTORIA ===== */
+.timeline{position:relative;padding-left:2rem}
+.timeline::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--gold),var(--red),var(--gold))
+}
+.timeline-event{
+  position:relative;margin-bottom:2rem;padding:1.25rem 1.5rem;
+  background:var(--dark3);border:1px solid var(--border);border-radius:4px;
+  transition:all 0.3s
+}
+.timeline-event::before{
+  content:'◆';position:absolute;left:-2.75rem;top:1.25rem;
+  color:var(--gold);font-size:0.7rem;animation:diamondPulse 3s ease-in-out infinite
+}
+@keyframes diamondPulse{0%,100%{text-shadow:0 0 5px var(--glow)}50%{text-shadow:0 0 15px var(--gold)}}
+.timeline-event:hover{border-color:rgba(201,168,76,0.3);box-shadow:0 5px 20px rgba(201,168,76,0.08)}
+.event-era{font-family:'Cinzel',serif;font-size:0.7rem;color:var(--red2);
+  letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem}
+.event-title{font-family:'Cinzel',serif;color:var(--gold);font-size:1rem;margin-bottom:0.7rem}
+.event-body{font-size:0.9rem;color:var(--text2);line-height:1.8;font-style:italic;
+  outline:none;min-height:60px}
+
+/* Cursor personalizado */
+.cursor-glow{
+  position:fixed;width:20px;height:20px;border-radius:50%;
+  border:1px solid rgba(201,168,76,0.6);pointer-events:none;
+  transform:translate(-50%,-50%);transition:all 0.15s ease;z-index:9999;
+  box-shadow:0 0 10px rgba(201,168,76,0.2)
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--dark)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+/* Partícula de chispa */
+@keyframes spark{
+  0%{transform:translate(0,0) scale(1);opacity:1}
+  100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}
+}
+.spark{
+  position:fixed;width:4px;height:4px;border-radius:50%;
+  background:var(--gold);pointer-events:none;z-index:9998;
+  animation:spark 0.8s ease forwards
+}
+
+/* ===== RESPONSIVE MÓVIL ===== */
+@media (max-width: 768px) {
+
+  /* Cursor personalizado: sin efecto en táctil */
+  .cursor-glow { display: none; }
+
+  /* HOME: pantalla de inicio */
+  #home-screen {
+    padding: 3.5rem 1rem 2rem;
+    justify-content: flex-start;
+  }
+  .home-border { top: 10px; left: 10px; right: 10px; bottom: 10px; }
+  .corner-ornament { width: 35px; height: 35px; }
+  .corner-ornament.tl { top: 10px; left: 10px; }
+  .corner-ornament.tr { top: 10px; right: 10px; }
+  .corner-ornament.bl { bottom: 10px; left: 10px; }
+  .corner-ornament.br { bottom: 10px; right: 10px; }
+  .home-sigil { font-size: 3.5rem; margin-bottom: 0.5rem; }
+  .home-title { font-size: clamp(2.8rem, 15vw, 4.5rem); }
+  .home-subtitle { font-size: 0.75rem; letter-spacing: 0.3em; margin: 0.5rem 0 0.3rem; }
+  .home-divider { width: 200px; margin: 1rem auto; }
+  .home-tagline { font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.7; }
+
+  /* Grid de secciones: 2 columnas en móvil */
+  .sections-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+  }
+  .section-btn { padding: 1.3rem 0.75rem; gap: 0.5rem; border-radius: 6px; }
+  .btn-icon { font-size: 2.6rem; }
+  .btn-label { font-size: 0.78rem; letter-spacing: 0.05em; }
+  .btn-desc { font-size: 0.68rem; line-height: 1.3; }
+
+  /* Secciones internas */
+  .section-page { padding: 1rem 0.85rem; }
+
+  /* Header de página */
+  .page-header { gap: 0.6rem; margin-bottom: 1.25rem; padding-bottom: 1rem; flex-wrap: wrap; }
+  .page-title { font-size: clamp(1.2rem, 5vw, 1.8rem); flex: 1; }
+  .back-btn { font-size: 0.7rem; padding: 0.45rem 0.75rem; }
+
+  /* Bloques editables */
+  .editable-block { padding: 1rem; margin-bottom: 1rem; }
+  .editable-block h3 { font-size: 0.85rem; margin-bottom: 0.75rem; }
+  .editable-block p, .editable-block [contenteditable] { font-size: 0.88rem; }
+
+  /* Personajes: grid 2 columnas */
+  #chars-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .char-card { padding: 1rem 0.75rem; }
+  .char-avatar { width: 60px; height: 60px; font-size: 1.8rem; margin-bottom: 0.6rem; }
+  .char-name { font-size: 0.85rem; }
+  .char-role { font-size: 0.7rem; }
+  .char-type-badge { font-size: 0.58rem; padding: 2px 6px; }
+
+  /* Detalle de personaje */
+  .char-detail-header { gap: 0.75rem; flex-wrap: wrap; }
+  .char-detail-avatar { width: 70px; height: 70px; font-size: 2.2rem; }
+  .char-detail-name { font-size: 1.4rem; }
+  .char-detail-role { font-size: 0.82rem; }
+
+  /* Viewer */
+  .char-viewer { padding: 0.75rem; min-height: 300px; }
+  .char-image-area { width: 180px; height: 270px; }
+  .char-silhouette { font-size: 5.5rem; }
+  .char-view-nav { font-size: 1rem; padding: 0.4rem 0.55rem; }
+  .viewer-controls { max-width:160px; gap:0.3rem; }
+  .viewer-ctrl-btn { font-size:0.58rem; padding:0.25rem 0.45rem; }
+  .hotspot-edit-panel { width:185px; padding:0.75rem; }
+  .hotspot-panel { width:155px; padding:0.7rem; }
+
+  /* Tabs del personaje: scrolleables sin wrap */
+  .char-tabs { gap: 0.2rem; margin: 1rem 0 0.75rem; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .char-tab { font-size: 0.65rem; padding: 0.45rem 0.65rem; white-space: nowrap; }
+
+  /* Accesorios */
+  .accessories-grid { gap: 0.5rem; }
+  .accessory-item { min-width: 130px; padding: 0.6rem; gap: 0.5rem; }
+  .acc-icon { font-size: 1.3rem; }
+  .acc-name { font-size: 0.7rem; }
+  .acc-desc { font-size: 0.65rem; }
+
+  /* Ideas / Tramas: 1 columna */
+  .ideas-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+  .idea-card { padding: 1rem; }
+  .idea-title { font-size: 0.82rem; }
+  .idea-body { font-size: 0.85rem; }
+
+  /* Técnicas */
+  .tecnica-item { padding: 1rem 1.1rem; }
+  .tecnica-name { font-size: 0.9rem; }
+  .tecnica-owner { font-size: 0.72rem; }
+  .tecnica-desc { font-size: 0.85rem; }
+
+  /* Clanes: 1 columna */
+  .clanes-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .clan-card { padding: 1.1rem; }
+  .clan-symbol { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .clan-name { font-size: 1rem; }
+  .clan-desc { font-size: 0.85rem; }
+
+  /* Timeline / Historia */
+  .timeline { padding-left: 1.5rem; }
+  .timeline-event { padding: 1rem 1.1rem; margin-bottom: 1.25rem; }
+  .timeline-event::before { left: -2.1rem; font-size: 0.65rem; }
+  .event-era { font-size: 0.65rem; }
+  .event-title { font-size: 0.9rem; }
+  .event-body { font-size: 0.85rem; }
+
+  /* Hotspot panels */
+  .hotspot-panel { width: 170px; padding: 0.75rem; }
+  .hotspot-panel h4 { font-size: 0.75rem; }
+  .hotspot-panel p { font-size: 0.7rem; }
+  .hotspot-dot { width: 26px; height: 26px; font-size: 0.8rem; }
+
+  /* Scrollbar más delgada */
+  ::-webkit-scrollbar { width: 3px; }
+
+  /* Reducir runas para mejor rendimiento */
+  .runa { font-size: 1rem !important; }
+}
+
+/* Pantallas muy pequeñas (≤ 380px) */
+@media (max-width: 380px) {
+  .home-title { font-size: 2.5rem; }
+  .sections-grid { gap: 0.55rem; }
+  .btn-icon { font-size: 2.2rem; }
+  .btn-label { font-size: 0.72rem; }
+  .btn-desc { display: none; }
+  .section-btn { padding: 1.1rem 0.6rem; }
+  .char-tab { font-size: 0.6rem; padding: 0.4rem 0.5rem; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="cursor-glow" id="cursor"></div>
+
+<div id="app">
+
+<!-- ===== HOME ===== -->
+<div id="home-screen">
+  <div class="home-border"></div>
+  <div class="corner-ornament tl"></div>
+  <div class="corner-ornament tr"></div>
+  <div class="corner-ornament bl"></div>
+  <div class="corner-ornament br"></div>
+
+  <span class="home-sigil">⚔</span>
+  <div class="home-subtitle">Universo Ficticio</div>
+  <div class="home-title">WAR SURVIVAL</div>
+  <div class="home-divider"></div>
+  <div class="home-tagline">
+    El Limbo se fragmenta. Los demonios avanzan. Ángeles y dioses no pueden intervenir. La última defensa somos nosotros.
+  </div>
+
+  <div class="sections-grid">
+    <div class="section-btn" onclick="navigate('historia')">
+      <span class="btn-icon">📜</span>
+      <div class="btn-label">Historia</div>
+      <div class="btn-desc">El lore y la narrativa central del universo War Survival</div>
+    </div>
+    <div class="section-btn" onclick="navigate('tramas')">
+      <span class="btn-icon">🌀</span>
+      <div class="btn-label">Tramas</div>
+      <div class="btn-desc">Arcos y subhistorias entrelazadas</div>
+    </div>
+    <div class="section-btn" onclick="navigate('ideas')">
+      <span class="btn-icon">💡</span>
+      <div class="btn-label">Ideas</div>
+      <div class="btn-desc">Conceptos e ideas para desarrollar</div>
+    </div>
+    <div class="section-btn" onclick="navigate('personajes')">
+      <span class="btn-icon">⚔</span>
+      <div class="btn-label">Personajes</div>
+      <div class="btn-desc">Fichas interactivas de cada personaje</div>
+    </div>
+    <div class="section-btn" onclick="navigate('clanes')">
+      <span class="btn-icon">🛡</span>
+      <div class="btn-label">Clanes</div>
+      <div class="btn-desc">Familias, organizaciones y grupos</div>
+    </div>
+    <div class="section-btn" onclick="navigate('tecnicas')">
+      <span class="btn-icon">🔥</span>
+      <div class="btn-label">Técnicas</div>
+      <div class="btn-desc">Habilidades y poderes del universo</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HISTORIA ===== -->
+<div id="historia" class="section-page">
+  <div class="page-header">
+    <button class="back-btn" onclick="navigate('home')">◀ Inicio</button>
+    <div class="page-title">📜 Historia & Lore</div>
+    <button class="back-btn" onclick="addHistoriaEvent()" style="margin-left:auto">+ Nuevo Evento</button>
+  </div>
+  <div class="timeline" id="historia-timeline"></div>
+</div>
+
+<!-- ===== TRAMAS ===== -->
+<div id="tramas" class="section-page">
+  <div class="page-header">
+    <button class="back-btn" onclick="navigate('home')">◀ Inicio</button>
+    <div class="page-title">🌀 Tramas</div>
+    <button class="back-btn" onclick="addCard('tramas')" style="margin-left:auto">+ Nueva Trama</button>
+  </div>
+  <div class="ideas-grid" id="tramas-grid"></div>
+</div>
+
+<!-- ===== IDEAS ===== -->
+<div id="ideas" class="section-page">
+  <div class="page-header">
+    <button class="back-btn" onclick="navigate('home')">◀ Inicio</button>
+    <div class="page-title">💡 Ideas</div>
+    <button class="back-btn" onclick="addCard('ideas')" style="margin-left:auto">+ Nueva Idea</button>
+  </div>
+  <div class="ideas-grid" id="ideas-grid"></div>
+</div>
+
+<!-- ===== PERSONAJES ===== -->
+<div id="personajes" class="section-page">
+  <div class="page-header">
+    <button class="back-btn" onclick="navigate('home')">◀ Inicio</button>
+    <div class="page-title">⚔ Personajes</div><button class="back-btn" onclick="createCharacter()" style="margin-left:auto">+ Nuevo Personaje</button>
+  </div>
+
+  <div id="chars-grid">
+  </div>
+
+  <div id="char-detail">
+    <div class="char-detail-header">
+      <div class="char-detail-avatar" id="cd-avatar"></div>
+      <div>
+        <div class="char-detail-name" id="cd-name"></div>
+        <div class="char-detail-role" id="cd-role"></div>
+      </div>
+      <button class="back-btn" style="margin-left:auto" onclick="closeChar()">◀ Personajes</button>
+    </div>
+
+    <!-- Viewer interactivo -->
+    <div class="char-viewer" id="char-viewer">
+      <button class="char-view-nav prev" onclick="changeView(-1)">◀</button>
+      <div class="char-image-area" id="char-img-area">
+        <div class="char-silhouette" id="char-sil"></div>
+        <div class="view-label" id="view-label">Vista Frontal</div>
+        <!-- Hotspots se generan dinámicamente -->
+      </div>
+      <button class="char-view-nav next" onclick="changeView(1)">▶</button>
+    </div>
+
+    <div class="char-tabs">
+      <button class="char-tab active" onclick="charTab(this,'info')">Info Esencial</button>
+      <button class="char-tab" onclick="charTab(this,'historia')">Historia</button>
+      <button class="char-tab" onclick="charTab(this,'accesorios')">Accesorios</button>
+      <button class="char-tab" onclick="charTab(this,'habilidades')">Habilidades</button>
+    </div>
+
+    <div id="tab-info" class="char-tab-content active">
+      <div class="editable-block">
+        <h3>Información Esencial</h3>
+        <div id="cd-info" contenteditable="true" class="event-body"></div>
+        <span class="edit-hint">✎ Editable</span>
+      </div>
+      <div class="editable-block">
+        <h3>Etimología del Nombre</h3>
+        <div id="cd-name-origin" contenteditable="true" class="event-body"></div>
+        <span class="edit-hint">✎ Editable</span>
+      </div>
+    </div>
+    <div id="tab-historia" class="char-tab-content">
+      <div class="editable-block">
+        <h3>Historia del Personaje</h3>
+        <div id="cd-story" contenteditable="true" class="event-body"></div>
+        <span class="edit-hint">✎ Editable</span>
+      </div>
+    </div>
+    <div id="tab-accesorios" class="char-tab-content">
+      <div class="accessories-grid" id="cd-accessories"></div>
+    </div>
+    <div id="tab-habilidades" class="char-tab-content">
+      <div class="editable-block">
+        <h3>Poderes y Habilidades</h3>
+        <div id="cd-powers" contenteditable="true" class="event-body"></div>
+        <span class="edit-hint">✎ Editable</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CLANES ===== -->
+<div id="clanes" class="section-page">
+  <div class="page-header">
+    <button class="back-btn" onclick="navigate('home')">◀ Inicio</button>
+    <div class="page-title">🛡 Clanes & Familias</div>
+    <button class="back-btn" onclick="addClan()" style="margin-left:auto">+ Nuevo Clan</button>
+  </div>
+  <div class="clanes-grid" id="clanes-grid"></div>
+</div>
+
+<!-- ===== TÉCNICAS ===== -->
+<div id="tecnicas" class="section-page">
+  <div class="page-header">
+    <button class="back-btn" onclick="navigate('home')">◀ Inicio</button>
+    <div class="page-title">🔥 Técnicas & Habilidades</div>
+    <button class="back-btn" onclick="addTecnica()" style="margin-left:auto">+ Nueva Técnica</button>
+  </div>
+  <div class="tecnicas-list" id="tecnicas-list"></div>
+</div>
+
+</div><!-- /app -->
+
+<!-- Runas flotantes -->
+<script>
+const runas=['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ','⚔','🜃','🜄','🜁','🜂'];
+function spawnRuna(){
+  const r=document.createElement('div');
+  r.className='runa';
+  r.textContent=runas[Math.floor(Math.random()*runas.length)];
+  r.style.left=Math.random()*100+'vw';
+  r.style.animationDuration=(15+Math.random()*20)+'s';
+  r.style.animationDelay=(-Math.random()*20)+'s';
+  r.style.fontSize=(0.8+Math.random()*1.5)+'rem';
+  document.body.appendChild(r);
+  setTimeout(()=>r.remove(),(35)*1000);
+}
+for(let i=0;i<20;i++) setTimeout(()=>spawnRuna(),i*800);
+setInterval(spawnRuna,3000);
+
+// Canvas de estrellas/partículas
+const canvas=document.getElementById('bg-canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const stars=[];
+for(let i=0;i<120;i++) stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.5,sp:0.05+Math.random()*0.2,p:Math.random()*Math.PI*2,a:Math.random()});
+function drawStars(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>{
+    s.p+=s.sp*0.02;
+    const alpha=0.1+Math.sin(s.p)*0.15;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(201,168,76,${alpha})`;ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight});
+
+// Cursor personalizado
+const cursor=document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{
+  cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';
+});
+document.addEventListener('click',e=>{
+  for(let i=0;i<6;i++){
+    const sp=document.createElement('div');sp.className='spark';
+    const angle=Math.random()*Math.PI*2;const dist=30+Math.random()*50;
+    sp.style.left=e.clientX+'px';sp.style.top=e.clientY+'px';
+    sp.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+    sp.style.setProperty('--dy',Math.sin(angle)*dist+'px');
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(),800);
+  }
+});
+
+// Navegación
+function navigate(section){
+  document.querySelectorAll('.section-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('home-screen').style.display='none';
+  if(section==='home'){
+    document.getElementById('home-screen').style.display='flex';
+    closeChar();
+  } else {
+    const pg=document.getElementById(section);
+    if(pg){pg.classList.add('active');}
+    if(section==='personajes') closeChar();
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Técnicas accordion
+function toggleTecnica(el){
+  if(el.closest('[contenteditable]') || window.getSelection().toString()) return;
+  const wasOpen=el.classList.contains('expanded');
+  document.querySelectorAll('.tecnica-item').forEach(t=>t.classList.remove('expanded'));
+  if(!wasOpen) el.classList.add('expanded');
+}
+
+// Datos de personajes
+const charData={
+  prota:{
+    name:'Kael',emoji:'⚡',
+    type:'principal',
+    role:'El Híbrido Imposible',
+    info:'Híbrido entre ángel y demonio, una anomalía que nunca debió existir. Su sola existencia ignora las leyes fundamentales de la creación, lo que tiene a todos los bandos — demonios, ángeles y humanos — sin saber cómo reaccionar ante él. Nadie sabe qué puede llegar a ser.',
+    nameOrigin:'Por definir. Su nombre carga el peso de algo que no encaja en ninguna categoría conocida.',
+    story:'Nació de una unión imposible entre dos razas completamente opuestas. Su existencia es una contradicción viviente: carga con la luz y la oscuridad al mismo tiempo. Los ángeles lo ven como una abominación. Los demonios lo ven como una amenaza. Los humanos no saben si es su aliado o su fin. Él tampoco lo sabe.',
+    powers:'Energía dual: acceso simultáneo a la energía divina y demoníaca. Inmunidad a leyes de la creación: las restricciones del pacto no aplican completamente sobre él. Potencial desconocido: nadie, ni los propios arcángeles, sabe qué puede lograr.',
+    accessories:[
+      {icon:'⚡',name:'Energía Dual',desc:'Luz y oscuridad conviviendo en un solo cuerpo'},
+      {icon:'🔥',name:'Marca Híbrida',desc:'La señal visible de su naturaleza imposible'}
+    ],
+    views:['Vista Frontal','Vista Lateral','Vista Posterior'],
+    hotspots:[],
+    images:[null,null,null],
+    viewHotspots:[[],[],[]]
+  },
+  vacio:{
+    name:'El Vacío',emoji:'🕳',
+    type:'antagonista',
+    role:'El Concepto Reencarnado',
+    info:'Híbrido entre demonio y humano que en una vida anterior era el concepto del Vacío mismo. Ahora reencarnado en forma mortal, hace todo lo posible por recuperar su antigua naturaleza. Es el principal responsable de la fragmentación del Limbo y del quiebre del equilibrio entre planos.',
+    nameOrigin:'Era literalmente el concepto del vacío antes de ser forzado a una forma. Su nombre actual es desconocido. Todos lo llaman por lo que fue.',
+    story:'Antes de tener un cuerpo, era el Vacío: un concepto puro, una de las fuerzas primordiales que existieron antes incluso de los Arcángeles. Algo lo obligó a reencarnarse en una forma híbrida de demonio y humano, aprisionándolo. Desde entonces trabaja metódicamente para corromper el Limbo y romper el equilibrio, buscando volver a su estado original de pura ausencia.',
+    powers:'Corrupción del Limbo: puede contaminar y fragmentar el tejido dimensional del Limbo. Encarnación del Vacío: restos de su naturaleza original le otorgan poder sobre la ausencia, la nada y la entropía. Manipulación de entidades: controla a las criaturas que habitan el Limbo corrompido.',
+    accessories:[
+      {icon:'🕳',name:'Eco del Vacío',desc:'Fragmentos de su antigua naturaleza que aún persisten'},
+      {icon:'🖤',name:'Corrupción',desc:'La influencia que emana de él contamina todo lo que toca'}
+    ],
+    views:['Vista Frontal','Vista Lateral','Vista Posterior'],
+    hotspots:[],
+    images:[null,null,null],
+    viewHotspots:[[],[],[]]
+  }
+};
+
+let currentChar=null;let currentView=0;let openPanel=null;
+
+function openChar(id){
+  const c=charData[id];if(!c) return;
+  // Inicializar estructuras nuevas si no existen
+  if(!c.images) c.images = [null, null, null];
+  if(!c.viewHotspots) c.viewHotspots = [c.hotspots||[], [], []];
+  currentChar=id;currentView=0;openPanel=null;editingHotspots=false;addingHotspot=false;
+  document.getElementById('chars-grid').style.display='none';
+  const det=document.getElementById('char-detail');
+  det.classList.add('active');
+  document.getElementById('cd-avatar').textContent=c.emoji;
+  document.getElementById('cd-name').textContent=c.name;
+  document.getElementById('cd-role').textContent=c.role;
+  document.getElementById('cd-info').textContent=c.info;
+  document.getElementById('cd-name-origin').textContent=c.nameOrigin;
+  document.getElementById('cd-story').textContent=c.story;
+  document.getElementById('cd-powers').textContent=c.powers;
+  renderAccessories(c.accessories);
+  renderView();
+  charTab(document.querySelector('.char-tab'), 'info');
+}
+
+function closeChar(){
+  document.getElementById('chars-grid').style.display='grid';
+  document.getElementById('char-detail').classList.remove('active');
+  currentChar=null;
+}
+
+// ─── VISTAS E IMÁGENES ────────────────────────────────────────────────────────
+
+const VIEW_NAMES = ['Frontal','Lateral','Posterior'];
+let editingHotspots = false; // modo edición de burbujas
+let addingHotspot   = false; // modo "click para colocar"
+
+function renderView(){
+  const c = charData[currentChar]; if(!c) return;
+  // Asegurar array de imágenes
+  if(!c.images) c.images = [null, null, null];
+  if(!c.viewHotspots) c.viewHotspots = [c.hotspots||[], [], []];
+
+  const sil  = document.getElementById('char-sil');
+  const area = document.getElementById('char-img-area');
+  const img  = area.querySelector('.char-uploaded-img');
+  const zone = area.querySelector('.img-upload-zone');
+  const lbl  = document.getElementById('view-label');
+
+  sil.textContent = c.emoji;
+  lbl.textContent = VIEW_NAMES[currentView];
+
+  // Imagen de la vista actual
+  const imgData = c.images[currentView];
+  if(img) img.remove();
+  if(zone) zone.remove();
+
+  // Crear zona de carga
+  const newZone = document.createElement('div');
+  newZone.className = 'img-upload-zone' + (imgData ? ' has-image' : '');
+  newZone.innerHTML = `
+    <span class="upload-icon">🖼</span>
+    <span class="upload-text">Subir imagen<br>${VIEW_NAMES[currentView]}</span>
+    <input type="file" accept="image/*" id="img-upload-${currentView}">`;
+  area.appendChild(newZone);
+
+  if(!imgData){
+    newZone.addEventListener('click', () => newZone.querySelector('input').click());
+    newZone.querySelector('input').addEventListener('change', e => {
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        if(!charData[currentChar].images) charData[currentChar].images = [null,null,null];
+        charData[currentChar].images[currentView] = ev.target.result;
+        renderView();
+      };
+      reader.readAsDataURL(file);
+    });
+  } else {
+    // Mostrar imagen
+    const imgEl = document.createElement('img');
+    imgEl.className = 'char-uploaded-img';
+    imgEl.src = imgData;
+    area.insertBefore(imgEl, newZone);
+    sil.style.display = 'none';
+  }
+
+  // Emitir/ocultar silueta
+  sil.style.display = imgData ? 'none' : 'block';
+
+  // Limpiar y redibujar hotspots
+  area.querySelectorAll('.hotspot,.hotspot-panel,.hotspot-edit-panel,.add-hs-hint').forEach(e=>e.remove());
+  openPanel = null;
+  const hs = c.viewHotspots[currentView] || [];
+  renderHotspots(hs);
+  _updateViewerControls();
+}
+
+function changeView(dir){
+  const c = charData[currentChar]; if(!c) return;
+  area_clearPanels();
+  addingHotspot = false;
+  currentView = (currentView + dir + 3) % 3;
+  const sil = document.getElementById('char-sil');
+  sil.style.transform='scale(0.8)'; sil.style.opacity='0';
+  sil.style.transition='all 0.2s';
+  setTimeout(()=>{ renderView(); sil.style.transform='scale(1)'; sil.style.opacity='1'; }, 200);
+}
+
+function area_clearPanels(){
+  document.querySelectorAll('.hotspot-panel,.hotspot-edit-panel,.add-hs-hint').forEach(e=>e.remove());
+  openPanel = null;
+}
+
+// Controles encima del viewer (imagen + burbujas)
+function _updateViewerControls(){
+  const viewer = document.getElementById('char-viewer');
+  viewer.querySelector('.viewer-controls')?.remove();
+  const ctrl = document.createElement('div');
+  ctrl.className = 'viewer-controls';
+  const c = charData[currentChar];
+  const hasImg = c && c.images && c.images[currentView];
+  ctrl.innerHTML = `
+    ${hasImg ? `<button class="viewer-ctrl-btn danger" onclick="removeViewImage()">🗑 Foto</button>` : ''}
+    <button class="viewer-ctrl-btn ${editingHotspots?'active':''}" onclick="toggleEditHotspots()">${editingHotspots?'✓ Editar burbujas':'✎ Editar burbujas'}</button>
+    ${editingHotspots ? `<button class="viewer-ctrl-btn ${addingHotspot?'active':''}" onclick="startAddHotspot()">+ Añadir burbuja</button>` : ''}`;
+  viewer.appendChild(ctrl);
+}
+
+function removeViewImage(){
+  const c = charData[currentChar]; if(!c) return;
+  if(!c.images) return;
+  c.images[currentView] = null;
+  renderView();
+}
+
+function toggleEditHotspots(){
+  editingHotspots = !editingHotspots;
+  if(!editingHotspots){ addingHotspot = false; }
+  area_clearPanels();
+  const area = document.getElementById('char-img-area');
+  area.classList.remove('adding-hotspot');
+  // Redibujar hotspots con o sin handles de arrastre
+  const c = charData[currentChar]; if(!c) return;
+  if(!c.viewHotspots) c.viewHotspots = [[],[],[]];
+  area.querySelectorAll('.hotspot,.add-hs-hint').forEach(e=>e.remove());
+  renderHotspots(c.viewHotspots[currentView] || []);
+  _updateViewerControls();
+}
+
+function startAddHotspot(){
+  addingHotspot = !addingHotspot;
+  const area = document.getElementById('char-img-area');
+  area.querySelectorAll('.add-hs-hint').forEach(e=>e.remove());
+  if(addingHotspot){
+    area.classList.add('adding-hotspot');
+    const hint = document.createElement('div');
+    hint.className = 'add-hs-hint';
+    hint.textContent = 'Hacé click en la imagen para colocar la burbuja';
+    area.appendChild(hint);
+    area.addEventListener('click', _onAreaClickAddHotspot, {once:true});
+  } else {
+    area.classList.remove('adding-hotspot');
+    area.removeEventListener('click', _onAreaClickAddHotspot);
+  }
+  _updateViewerControls();
+}
+
+function _onAreaClickAddHotspot(e){
+  addingHotspot = false;
+  const area = document.getElementById('char-img-area');
+  area.classList.remove('adding-hotspot');
+  area.querySelectorAll('.add-hs-hint').forEach(el=>el.remove());
+
+  const rect = area.getBoundingClientRect();
+  const xPct = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
+  const yPct = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+
+  const c = charData[currentChar]; if(!c) return;
+  if(!c.viewHotspots) c.viewHotspots = [[],[],[]];
+  const newH = { x: parseFloat(xPct), y: parseFloat(yPct), emoji:'✨', title:'Nueva burbuja', desc:'Editá esta descripción', dir:'right' };
+  c.viewHotspots[currentView].push(newH);
+  const idx = c.viewHotspots[currentView].length - 1;
+  area.querySelectorAll('.hotspot').forEach(e=>e.remove());
+  renderHotspots(c.viewHotspots[currentView]);
+  // Abrir editor del nuevo hotspot
+  setTimeout(() => openHotspotEditor(idx), 100);
+  _updateViewerControls();
+}
+
+// ─── RENDER HOTSPOTS ───────────────────────────────────────────────────────────
+
+function renderHotspots(hotspots){
+  const area = document.getElementById('char-img-area');
+  hotspots.forEach((h, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'hotspot' + (editingHotspots ? ' draggable' : '');
+    dot.style.cssText = `left:${h.x}%;top:${h.y}%;transform:translate(-50%,-50%);position:absolute;z-index:10`;
+    dot.dataset.idx = i;
+    dot.innerHTML = `<div class="hotspot-dot">${h.emoji}</div>`;
+
+    if(editingHotspots){
+      // Drag para mover
+      _makeDraggable(dot, area, i);
+      // Click: abrir editor
+      dot.addEventListener('click', e => { e.stopPropagation(); openHotspotEditor(i); });
+    } else {
+      // Modo lectura: mostrar panel info
+      dot.addEventListener('click', e => { e.stopPropagation(); showPanel(h, dot, i); });
+    }
+    area.appendChild(dot);
+  });
+}
+
+function _makeDraggable(dotEl, area, idx){
+  let startX, startY, startLeft, startTop, dragging = false;
+  const onDown = e => {
+    e.stopPropagation();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const rect = area.getBoundingClientRect();
+    startX = clientX; startY = clientY;
+    startLeft = parseFloat(dotEl.style.left);
+    startTop  = parseFloat(dotEl.style.top);
+    dragging = true;
+    dotEl.classList.add('dragging');
+    area_clearPanels();
+    const onMove = e2 => {
+      if(!dragging) return;
+      const cx = e2.touches ? e2.touches[0].clientX : e2.clientX;
+      const cy = e2.touches ? e2.touches[0].clientY : e2.clientY;
+      const dx = (cx - startX) / rect.width  * 100;
+      const dy = (cy - startY) / rect.height * 100;
+      const newL = Math.max(0, Math.min(100, startLeft + dx));
+      const newT = Math.max(0, Math.min(100, startTop  + dy));
+      dotEl.style.left = newL + '%';
+      dotEl.style.top  = newT + '%';
+      const c = charData[currentChar];
+      if(c && c.viewHotspots && c.viewHotspots[currentView]){
+        c.viewHotspots[currentView][idx].x = parseFloat(newL.toFixed(1));
+        c.viewHotspots[currentView][idx].y = parseFloat(newT.toFixed(1));
+      }
+    };
+    const onUp = () => {
+      dragging = false;
+      dotEl.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend',  onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+    document.addEventListener('touchmove', onMove, {passive:true});
+    document.addEventListener('touchend',  onUp);
+  };
+  dotEl.addEventListener('mousedown',  onDown);
+  dotEl.addEventListener('touchstart', onDown, {passive:true});
+}
+
+// ─── PANEL LECTURA ─────────────────────────────────────────────────────────────
+
+function showPanel(h, dotEl, idx){
+  area_clearPanels();
+  if(openPanel===idx){ openPanel=null; return; }
+  openPanel = idx;
+  const panel = document.createElement('div');
+  panel.className = 'hotspot-panel';
+  const area = document.getElementById('char-img-area');
+  const aW = area.offsetWidth;
+  const dotLeft = parseFloat(dotEl.style.left);
+  const isRight = dotLeft < 60;
+  panel.style.cssText = `top:${h.y}%;${isRight?'left:calc('+h.x+'% + 20px)':'right:calc('+(100-h.x)+'% + 20px)'};transform:translateY(-50%)`;
+  panel.innerHTML = `
+    <button class="close-panel" onclick="closePanel(event)">✕</button>
+    <h4>${h.emoji} ${h.title}</h4>
+    <p>${h.desc}</p>`;
+  area.appendChild(panel);
+}
+function closePanel(e){ e.stopPropagation(); area_clearPanels(); }
+
+// ─── EDITOR DE HOTSPOT ─────────────────────────────────────────────────────────
+
+function openHotspotEditor(idx){
+  area_clearPanels();
+  const c = charData[currentChar]; if(!c) return;
+  const h = c.viewHotspots[currentView][idx]; if(!h) return;
+  const area = document.getElementById('char-img-area');
+  const panel = document.createElement('div');
+  panel.className = 'hotspot-edit-panel';
+  const isRight = h.x < 60;
+  panel.style.cssText = `top:${Math.min(h.y, 70)}%;${isRight?'left:calc('+h.x+'% + 22px)':'right:calc('+(100-h.x)+'% + 22px)'};transform:translateY(-50%)`;
+  panel.innerHTML = `
+    <label>EMOJI</label>
+    <input id="_he-emoji" value="${h.emoji}" maxlength="4" style="width:60px;text-align:center;font-size:1.1rem">
+    <label>TÍTULO</label>
+    <input id="_he-title" value="${h.title}">
+    <label>DESCRIPCIÓN</label>
+    <textarea id="_he-desc" rows="3">${h.desc}</textarea>
+    <div class="panel-actions">
+      <button class="back-btn" onclick="saveHotspotEdit(${idx})">✓ Guardar</button>
+      <button class="back-btn" onclick="deleteHotspot(${idx})" style="border-color:var(--red2);color:#e88">🗑</button>
+      <button class="back-btn" onclick="area_clearPanels()">✕</button>
+    </div>`;
+  area.appendChild(panel);
+  panel.querySelector('#_he-title').focus();
+}
+
+function saveHotspotEdit(idx){
+  const c = charData[currentChar]; if(!c) return;
+  const h = c.viewHotspots[currentView][idx]; if(!h) return;
+  h.emoji = document.getElementById('_he-emoji').value || '✨';
+  h.title = document.getElementById('_he-title').value || 'Burbuja';
+  h.desc  = document.getElementById('_he-desc').value  || '';
+  area_clearPanels();
+  const area = document.getElementById('char-img-area');
+  area.querySelectorAll('.hotspot').forEach(e=>e.remove());
+  renderHotspots(c.viewHotspots[currentView]);
+}
+
+function deleteHotspot(idx){
+  const c = charData[currentChar]; if(!c) return;
+  c.viewHotspots[currentView].splice(idx, 1);
+  area_clearPanels();
+  const area = document.getElementById('char-img-area');
+  area.querySelectorAll('.hotspot').forEach(e=>e.remove());
+  renderHotspots(c.viewHotspots[currentView]);
+  _updateViewerControls();
+}
+
+function renderAccessories(accs){
+  const el=document.getElementById('cd-accessories');
+  el.innerHTML=accs.map(a=>`
+    <div class="accessory-item">
+      <span class="acc-icon">${a.icon}</span>
+      <div><div class="acc-name">${a.name}</div><div class="acc-desc">${a.desc}</div></div>
+    </div>
+  `).join('');
+}
+
+function charTab(btn,tab){
+  document.querySelectorAll('.char-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.char-tab-content').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const el=document.getElementById('tab-'+tab);
+  if(el) el.classList.add('active');
+}
+</script>
+
+<script>
+/* =============================================
+   SISTEMA DE SECCIONES — Historia, Tramas, Ideas, Clanes, Técnicas
+   Datos por defecto + localStorage + agregar/editar/eliminar
+   ============================================= */
+
+// ── DATOS POR DEFECTO ────────────────────────
+
+const DEFAULT_HISTORIA = [
+  { era:'El Origen', title:'La Rebelión de la Creación', body:'En el principio absoluto hubo una guerra. Una rebelión que amenazó con destruir todo lo existente desde adentro. El Creador, para contener el caos, forjó a los cuatro Arcángeles: seres de poder supremo que actuarían como administradores de la existencia. Fueron ellos quienes pusieron fin a la guerra, establecieron los conceptos fundamentales y dividieron todo en cuatro planos existenciales.' },
+  { era:'La Gran División', title:'Los Cuatro Planos', body:'Los Arcángeles separaron la existencia en cuatro planos: el Cielo, el Infierno, el Mundo Mortal y el Limbo. Este último fue diseñado específicamente para actuar como barrera de aislamiento entre la Tierra y los otros planos, impidiendo el contacto directo entre lo mortal y lo divino o lo infernal. El equilibrio dependía de su integridad.' },
+  { era:'El Pacto', title:'La Ley del No Intervención', body:'Para garantizar la paz entre bandos, se forjó un pacto vinculante: ningún ángel, dios o demonio podría cruzar al plano mortal sin ser invocado o sin permiso. Si alguno lo violara, el pacto se rompería por completo y desataría consecuencias catastróficas para todos los planos. Esta ley convirtió a los humanos en los únicos agentes libres en el mundo mortal.' },
+  { era:'La Corrupción', title:'El Limbo se Fragmenta', body:'El Limbo comenzó a corromperse. La influencia de los ángeles caídos y de entidades que encarnan los miedos primordiales empezó a contaminar su tejido dimensional, fragmentándolo poco a poco. Lo que era una barrera perfecta se convirtió en una dimensión inestable, llena de grietas por donde empezaron a filtrarse criaturas y entidades oscuras hacia el mundo mortal.' },
+  { era:'La Respuesta', title:'La Energía Lumen', body:'Atados por el pacto e incapaces de intervenir directamente, los ángeles y dioses tomaron otra vía: identificaron humanos con potencial latente y les otorgaron la Energía Lumen, lo más parecido a la magia que existe. Con ella, estos humanos llamados Portadores podrían defenderse de lo que emergiera del Limbo corrompido y mantener el equilibrio sin romper el pacto.' },
+  { era:'La Anomalía', title:'Dos Imposibles Cambian Todo', body:'Dos eventos inesperados sacudieron el orden establecido. Primero: un híbrido de demonio y humano resultó ser la reencarnación del concepto del Vacío, trabajando activamente para recuperar su naturaleza original y siendo el principal responsable de la corrupción del Limbo. Segundo: nació un híbrido de ángel y demonio, una anomalía sin precedentes que ignora las leyes de la creación. Nadie sabe qué puede ocurrir.' }
+];
+
+const DEFAULT_TRAMAS = [
+  { title:'La Fragmentación del Limbo', body:'El Vacío trabaja metódicamente para corromper el Limbo desde adentro. Cada fragmento que cae libera entidades y abre grietas al mundo mortal. Si el Limbo colapsa completamente, la barrera entre planos desaparece y el pacto ya no tendrá sentido.' },
+  { title:'El Híbrido sin Bando', body:'Kael no pertenece a ninguno de los tres bandos. Los ángeles lo ven como una aberración. Los demonios lo ven como una amenaza. Los humanos no saben si protegerlo o eliminarlo. Él navega en ese limbo de desconfianza mientras descubre lo que realmente es.' },
+  { title:'El Dilema del Pacto', body:'Si alguien cruza ilegalmente al plano mortal para ayudar a los humanos, el pacto se rompe y comienza una guerra total. Pero si nadie interviene, el Limbo colapsa de todas formas. El reloj corre en ambas direcciones.' },
+  { title:'Los Portadores de Lumen', body:'Los humanos con Energía Lumen son la primera y última línea de defensa. ¿Cuántos son? ¿Están organizados? ¿Qué ocurre si El Vacío los elimina uno por uno antes de que puedan coordinarse?' },
+  { title:'La Naturaleza del Vacío', body:'¿Qué pasaría si El Vacío logra recuperar su forma original? ¿Vuelve a ser un concepto puro e intocable? ¿Puede un concepto ser derrotado? Y más importante: ¿fue realmente aprisionado en esa forma... o eligió esta existencia por alguna razón?' },
+  { title:'Los Ángeles Caídos', body:'No todos los ángeles caídos trabajan para El Vacío. Algunos tienen sus propias agendas. Algunos quizás buscan redención. Pero todos están atrapados en el Limbo corrompido, que los cambia cada día que pasa.' }
+];
+
+const DEFAULT_IDEAS = [
+  { title:'¿Qué es exactamente el potencial Lumen?', body:'¿Naces con él o se desarrolla? ¿Es genético, espiritual, o una combinación? ¿Puede perderse? Agregar ideas sobre cómo funciona la selección de Portadores...' },
+  { title:'Las entidades del miedo', body:'Si encarnan miedos humanos, ¿cuáles son las más poderosas? ¿El miedo a la muerte? ¿Al olvido? ¿A la soledad? Explorar qué forma tomarían y qué capacidades tendrían...' },
+  { title:'¿Qué quieren los Arcángeles ahora?', body:'Crearon el orden, pero el orden se está rompiendo. ¿Están activos? ¿Tienen un plan? ¿Alguno podría estar colaborando con El Vacío sin saberlo? Sus motivaciones están por definir...' }
+];
+
+const DEFAULT_CLANES = [
+  { symbol:'☀', name:'Portadores del Lumen', desc:'Humanos seleccionados por ángeles y dioses que recibieron la Energía Lumen. Son la defensa activa del mundo mortal contra las entidades del Limbo. No son una organización formal: algunos ni saben que otros existen.' },
+  { symbol:'🕳', name:'Culto del Vacío', desc:'Humanos y entidades que siguen activamente a El Vacío, creyendo que el retorno del concepto original significará una existencia purificada. Trabajan desde las sombras para acelerar la corrupción del Limbo.' }
+];
+
+const DEFAULT_TECNICAS = [
+  { name:'Energía Lumen', owner:'Portadores', desc:'La manifestación de poder más cercana a la magia que existe en el mundo mortal. Otorgada por ángeles y dioses a humanos con potencial, permite combatir a las entidades del Limbo. Cada Portador la canaliza de manera distinta según su naturaleza.' },
+  { name:'Corrupción del Limbo', owner:'El Vacío', desc:'La capacidad de contaminar el tejido dimensional del Limbo, fragmentándolo y llenándolo de grietas. Cuanto más se fragmenta, más entidades oscuras pueden filtrarse al plano mortal sin necesidad de ser invocadas.' },
+  { name:'Energía Dual', owner:'Kael', desc:'La combinación imposible de energía divina y demoníaca en un solo cuerpo. Nadie sabe sus límites porque nadie ha existido antes con esta naturaleza. Puede manifestarse de formas distintas e impredecibles.' }
+]
+// ── STORAGE HELPERS ───────────────────────────
+
+function sLoad(key, def){ try{ const v=localStorage.getItem(key); return v ? JSON.parse(v) : def; }catch(e){ return def; } }
+function sSave(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function sectionSave(){ 
+  sSave('ws_historia',  _readSection('historia-timeline',  'historia'));
+  sSave('ws_tramas',    _readSection('tramas-grid',        'tramas'));
+  sSave('ws_ideas',     _readSection('ideas-grid',         'ideas'));
+  sSave('ws_clanes',    _readClanesSection());
+  sSave('ws_tecnicas',  _readTecnicasSection());
+}
+
+// Lee datos actuales del DOM para persistirlos
+function _readSection(gridId, type){
+  const grid = document.getElementById(gridId);
+  if(!grid) return [];
+  if(type === 'historia'){
+    return [...grid.querySelectorAll('.timeline-event')].map(el=>({
+      era:   el.querySelector('.event-era')?.textContent   || '',
+      title: el.querySelector('.event-title')?.textContent || '',
+      body:  el.querySelector('.event-body')?.textContent  || ''
+    }));
+  }
+  return [...grid.querySelectorAll('.idea-card')].map(el=>({
+    title: el.querySelector('.idea-title')?.textContent || '',
+    body:  el.querySelector('.idea-body')?.textContent  || ''
+  }));
+}
+function _readClanesSection(){
+  const grid = document.getElementById('clanes-grid');
+  if(!grid) return [];
+  return [...grid.querySelectorAll('.clan-card')].map(el=>({
+    symbol: el.querySelector('.clan-symbol')?.textContent || '✦',
+    name:   el.querySelector('.clan-name')?.textContent   || '',
+    desc:   el.querySelector('.clan-desc')?.textContent   || ''
+  }));
+}
+function _readTecnicasSection(){
+  const list = document.getElementById('tecnicas-list');
+  if(!list) return [];
+  return [...list.querySelectorAll('.tecnica-item')].map(el=>({
+    name:  el.querySelector('.tecnica-name')?.childNodes[0]?.textContent?.trim() || '',
+    owner: el.querySelector('.tecnica-owner')?.textContent || '',
+    desc:  el.querySelector('.tecnica-desc')?.textContent  || ''
+  }));
+}
+
+// Exponer funciones de render al scope global para Firebase
+window.renderHistoria        = renderHistoria;
+window.renderView            = renderView;
+window.renderCards           = renderCards;
+window.renderClanes          = renderClanes;
+window.renderTecnicas        = renderTecnicas;
+window._readSection          = _readSection;
+window._readClanesSection    = _readClanesSection;
+window._readTecnicasSection  = _readTecnicasSection;
+
+// Auto-guardado manejado por Firebase (ver script type=module al final)
+
+// ── RENDERIZADORES ─────────────────────────────
+
+function renderHistoria(items){
+  const tl = document.getElementById('historia-timeline');
+  tl.innerHTML = '';
+  items.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'timeline-event';
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.3rem">
+        <div class="event-era" contenteditable="true" title="Editar era">${item.era}</div>
+        <button onclick="deleteItem('historia',${i})" title="Eliminar evento"
+          style="background:none;border:none;color:var(--red2);cursor:pointer;font-size:0.85rem;opacity:0.6;padding:0 0 0 1rem;flex-shrink:0" 
+          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✕</button>
+      </div>
+      <div class="event-title" contenteditable="true" title="Editar título">${item.title}</div>
+      <div class="event-body" contenteditable="true">${item.body}</div>`;
+    tl.appendChild(el);
+  });
+}
+
+function renderCards(gridId, items){
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  items.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'idea-card';
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+        <div class="idea-title" contenteditable="true" title="Editar título">${item.title}</div>
+        <button onclick="deleteItem('${gridId==='tramas-grid'?'tramas':'ideas'}',${i})" title="Eliminar"
+          style="background:none;border:none;color:var(--red2);cursor:pointer;font-size:0.85rem;opacity:0.6;padding:0 0 0 0.75rem;flex-shrink:0"
+          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✕</button>
+      </div>
+      <div class="idea-body" contenteditable="true">${item.body}</div>`;
+    grid.appendChild(el);
+  });
+}
+
+function renderClanes(items){
+  const grid = document.getElementById('clanes-grid');
+  grid.innerHTML = '';
+  items.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'clan-card';
+    el.innerHTML = `
+      <div style="display:flex;justify-content:flex-end">
+        <button onclick="deleteClan(${i})" title="Eliminar clan"
+          style="background:none;border:none;color:var(--red2);cursor:pointer;font-size:0.85rem;opacity:0.6;padding:0"
+          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✕</button>
+      </div>
+      <span class="clan-symbol" contenteditable="true" title="Editar símbolo">${item.symbol}</span>
+      <div class="clan-name" contenteditable="true" title="Editar nombre">${item.name}</div>
+      <div class="clan-desc" contenteditable="true">${item.desc}</div>`;
+    grid.appendChild(el);
+  });
+}
+
+function renderTecnicas(items){
+  const list = document.getElementById('tecnicas-list');
+  list.innerHTML = '';
+  items.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'tecnica-item';
+    el.innerHTML = `
+      <div class="tecnica-name" style="display:flex;justify-content:space-between;align-items:center">
+        <span contenteditable="true" onclick="event.stopPropagation()" title="Editar nombre">${item.name}</span>
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <span class="tecnica-chevron">▼</span>
+          <button onclick="event.stopPropagation();deleteTecnica(${i})" title="Eliminar técnica"
+            style="background:none;border:none;color:var(--red2);cursor:pointer;font-size:0.85rem;opacity:0.6;padding:0"
+            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✕</button>
+        </div>
+      </div>
+      <div class="tecnica-owner" contenteditable="true" onclick="event.stopPropagation()" title="Editar personaje/clan">${item.owner}</div>
+      <div class="tecnica-desc" contenteditable="true" onclick="event.stopPropagation()">${item.desc}</div>`;
+    el.addEventListener('click', function(e){
+      if(e.target.closest('[contenteditable]') || e.target.tagName==='BUTTON') return;
+      toggleTecnica(el);
+    });
+    list.appendChild(el);
+  });
+}
+
+// ── AGREGAR ────────────────────────────────────
+
+function addHistoriaEvent(){
+  const items = _readSection('historia-timeline','historia');
+  items.push({ era:'Nueva Era', title:'Nuevo Evento', body:'Describe este momento del lore...' });
+  renderHistoria(items);
+  sSave('ws_historia', items);
+  // scroll al final
+  const tl = document.getElementById('historia-timeline');
+  tl.lastElementChild?.scrollIntoView({ behavior:'smooth', block:'center' });
+  tl.lastElementChild?.querySelector('.event-title')?.focus();
+}
+
+function addCard(section){
+  const key = section === 'tramas' ? 'tramas-grid' : 'ideas-grid';
+  const storageKey = 'loop_' + section;
+  const items = _readSection(key, section);
+  items.push({ title:'Nuevo Título', body:'Escribe aquí...' });
+  renderCards(key, items);
+  sSave(storageKey, items);
+  const grid = document.getElementById(key);
+  grid.lastElementChild?.scrollIntoView({ behavior:'smooth', block:'center' });
+  grid.lastElementChild?.querySelector('.idea-title')?.focus();
+}
+
+function addClan(){
+  const items = _readClanesSection();
+  items.push({ symbol:'⊕', name:'Nuevo Clan', desc:'Describe este clan o familia...' });
+  renderClanes(items);
+  sSave('ws_clanes', items);
+  const grid = document.getElementById('clanes-grid');
+  grid.lastElementChild?.scrollIntoView({ behavior:'smooth', block:'center' });
+  grid.lastElementChild?.querySelector('.clan-name')?.focus();
+}
+
+function addTecnica(){
+  const items = _readTecnicasSection();
+  items.push({ name:'Nueva Técnica', owner:'Personaje o Clan', desc:'Describe el poder o habilidad...' });
+  renderTecnicas(items);
+  sSave('ws_tecnicas', items);
+  const list = document.getElementById('tecnicas-list');
+  const last = list.lastElementChild;
+  last?.scrollIntoView({ behavior:'smooth', block:'center' });
+  last?.querySelector('[contenteditable]')?.focus();
+}
+
+// ── ELIMINAR ───────────────────────────────────
+
+function deleteItem(section, i){
+  const isHistoria = section === 'historia';
+  const gridId = isHistoria ? 'historia-timeline' : (section==='tramas'?'tramas-grid':'ideas-grid');
+  const storageKey = 'loop_' + section;
+  const items = isHistoria ? _readSection(gridId,'historia') : _readSection(gridId, section);
+  items.splice(i, 1);
+  if(isHistoria) renderHistoria(items); else renderCards(gridId, items);
+  sSave(storageKey, items);
+}
+
+function deleteClan(i){
+  const items = _readClanesSection();
+  items.splice(i, 1);
+  renderClanes(items);
+  sSave('ws_clanes', items);
+}
+
+function deleteTecnica(i){
+  const items = _readTecnicasSection();
+  items.splice(i, 1);
+  renderTecnicas(items);
+  sSave('ws_tecnicas', items);
+}
+
+// ── INICIALIZACIÓN ─────────────────────────────
+
+window.addEventListener('load', () => {
+  renderHistoria( sLoad('ws_historia',  DEFAULT_HISTORIA) );
+  renderCards('tramas-grid', sLoad('ws_tramas', DEFAULT_TRAMAS) );
+  renderCards('ideas-grid',  sLoad('ws_ideas',  DEFAULT_IDEAS) );
+  renderClanes(   sLoad('ws_clanes',    DEFAULT_CLANES) );
+  renderTecnicas( sLoad('ws_tecnicas',  DEFAULT_TECNICAS) );
+});
+</script>
+
+<script>
+/* =============================================
+   SISTEMA DE PERSONAJES — VERSIÓN LIMPIA
+   Reemplaza todos los scripts anteriores de personajes.
+   Un solo bloque, sin conflictos.
+   ============================================= */
+
+// Mapa: id -> elemento DOM de la tarjeta
+const cardElements = {};
+// Exponer al scope global para Firebase
+window.charData = charData;
+
+// ── Crear personaje nuevo ──────────────────────
+function createCharacter(){
+  const id = 'char_' + Date.now();
+
+  charData[id] = {
+    name: 'Nuevo Personaje',
+    emoji: '🧍',
+    role: 'Rol del personaje',
+    type: 'secundario',
+    info: '',
+    nameOrigin: '',
+    story: '',
+    powers: '',
+    accessories: [],
+    views: ['Frontal','Lateral','Posterior'],
+    hotspots: [],
+    images: [null, null, null],
+    viewHotspots: [[], [], []]
+  };
+
+  _addCardToGrid(id);
+  openChar(id);
+}
+
+function _addCardToGrid(id){
+  const c = charData[id];
+  const grid = document.getElementById('chars-grid');
+  const card = document.createElement('div');
+  card.className = 'char-card';
+  card.dataset.charId = id;
+  card.onclick = () => openChar(id);
+  card.innerHTML = `
+    <div class="char-avatar">${c.emoji}</div>
+    <div class="char-name">${c.name}</div>
+    <div class="char-role">${c.role}</div>
+    <span class="char-type-badge badge-${c.type||'secundario'}">${_typeLabel(c.type)}</span>`;
+  grid.appendChild(card);
+  cardElements[id] = card;
+}
+
+function _typeLabel(t){
+  const map = { principal:'Principal', secundario:'Secundario', antagonista:'Antagonista', misterioso:'Misterioso' };
+  return map[t] || 'Secundario';
+}
+
+function _typeBadgeClass(t){
+  const map = { principal:'badge-principal', secundario:'badge-secundario', antagonista:'badge-principal', misterioso:'badge-secundario' };
+  return map[t] || 'badge-secundario';
+}
+
+// Actualiza la tarjeta en el grid desde charData
+window._syncCard = _syncCard;
+window._addCardToGrid = _addCardToGrid;
+function _syncCard(id){
+  const card = cardElements[id] || document.querySelector(`[data-char-id="${id}"]`);
+  if(!card) return;
+  const c = charData[id];
+  const av = card.querySelector('.char-avatar');
+  const nm = card.querySelector('.char-name');
+  const rl = card.querySelector('.char-role');
+  const bd = card.querySelector('.char-type-badge');
+  if(av) av.textContent = c.emoji || '🧍';
+  if(nm) nm.textContent = c.name || 'Sin nombre';
+  if(rl) rl.textContent = c.role || '';
+  if(bd){ bd.textContent = _typeLabel(c.type); bd.className = 'char-type-badge '+_typeBadgeClass(c.type); }
+}
+
+// ── Abrir ficha ────────────────────────────────
+// Guardamos referencia a la función original
+const _openCharBase = openChar;
+
+openChar = function(id){
+  _openCharBase(id);
+  _buildCharEditor(id);
+};
+
+function _buildCharEditor(id){
+  const c = charData[id];
+
+  // Hacer editables nombre y rol en el header
+  const cdName = document.getElementById('cd-name');
+  const cdRole = document.getElementById('cd-role');
+  cdName.contentEditable = true;
+  cdRole.contentEditable = true;
+
+  // Eliminar controles viejos para reconstruirlos limpios
+  document.getElementById('_char-editor-bar')?.remove();
+
+  // Barra de controles encima de las tabs
+  const bar = document.createElement('div');
+  bar.id = '_char-editor-bar';
+  bar.className = 'editable-block';
+  bar.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:1rem';
+  bar.innerHTML = `
+    <label style="font-family:Cinzel,serif;font-size:0.75rem;color:var(--gold);letter-spacing:0.1em">EMOJI
+      <input id="_char-emoji" maxlength="4" value="${c.emoji||'🧍'}"
+        style="margin-left:0.5rem;width:55px;background:var(--dark2);border:1px solid var(--border);
+               color:var(--text2);padding:4px 6px;border-radius:3px;font-size:1.1rem;text-align:center">
+    </label>
+    <label style="font-family:Cinzel,serif;font-size:0.75rem;color:var(--gold);letter-spacing:0.1em">TIPO
+      <select id="_char-type"
+        style="margin-left:0.5rem;background:var(--dark2);border:1px solid var(--border);
+               color:var(--text2);padding:4px 8px;border-radius:3px;font-family:Cinzel,serif;font-size:0.72rem">
+        <option value="principal"  ${(c.type==='principal' ?'selected':'')}>Principal</option>
+        <option value="secundario" ${(!c.type||c.type==='secundario'?'selected':'')}>Secundario</option>
+        <option value="antagonista"${(c.type==='antagonista'?'selected':'')}>Antagonista</option>
+        <option value="misterioso" ${(c.type==='misterioso'?'selected':'')}>Misterioso</option>
+      </select>
+    </label>
+    <button class="back-btn" onclick="saveCurrentCharacter()" style="margin-left:auto">💾 Guardar</button>
+    <button class="back-btn" onclick="deleteCharacter('${id}')" style="border-color:var(--red2);color:#e88">🗑 Eliminar</button>`;
+
+  const tabs = document.querySelector('.char-tabs');
+  tabs.parentNode.insertBefore(bar, tabs);
+
+  // Eventos en tiempo real
+  document.getElementById('_char-emoji').oninput = _liveSync;
+  document.getElementById('_char-type').onchange = _liveSync;
+  cdName.oninput = _liveSync;
+  cdRole.oninput = _liveSync;
+}
+
+// Sincronización en vivo: datos → tarjeta (sin necesidad de guardar para ver el cambio)
+function _liveSync(){
+  if(!currentChar || !charData[currentChar]) return;
+  const c = charData[currentChar];
+
+  const emojiEl = document.getElementById('_char-emoji');
+  const typeEl  = document.getElementById('_char-type');
+  const nameEl  = document.getElementById('cd-name');
+  const roleEl  = document.getElementById('cd-role');
+
+  if(emojiEl) { c.emoji = emojiEl.value || '🧍'; document.getElementById('cd-avatar').textContent = c.emoji; }
+  if(typeEl)  c.type = typeEl.value;
+  if(nameEl)  c.name = nameEl.textContent || 'Sin nombre';
+  if(roleEl)  c.role = roleEl.textContent;
+
+  _syncCard(currentChar);
+}
+
+// ── Guardar ────────────────────────────────────
+function saveCurrentCharacter(){
+  if(!currentChar || !charData[currentChar]) return;
+  const c = charData[currentChar];
+
+  _liveSync(); // asegura estado actualizado
+
+  c.info       = document.getElementById('cd-info')?.textContent       || c.info;
+  c.nameOrigin = document.getElementById('cd-name-origin')?.textContent || c.nameOrigin;
+  c.story      = document.getElementById('cd-story')?.textContent       || c.story;
+  c.powers     = document.getElementById('cd-powers')?.textContent      || c.powers;
+
+  // Accesorios
+  const accNodes = document.querySelectorAll('#acc-list .accessory-item');
+  if(accNodes.length){
+    c.accessories = [...accNodes].map(x=>({
+      icon: x.querySelector('.acc-icon')?.textContent  || '✨',
+      name: x.querySelector('.acc-name')?.textContent  || '',
+      desc: x.querySelector('.acc-desc')?.textContent  || ''
+    }));
+  }
+
+  // Imágenes y hotspots ya se guardan en tiempo real en charData
+  // (images y viewHotspots se actualizan directamente)
+
+  _syncCard(currentChar);
+  _saveToStorage();
+
+  // Feedback visual breve
+  const btn = document.querySelector('#_char-editor-bar .back-btn');
+  if(btn){ const orig=btn.textContent; btn.textContent='✔ Guardado'; setTimeout(()=>btn.textContent=orig,1500); }
+}
+
+function _saveToStorage(){
+  try{ localStorage.setItem('ws_characters', JSON.stringify(charData)); }catch(e){}
+}
+
+// ── Eliminar personaje ─────────────────────────
+function deleteCharacter(id){
+  if(!id || !charData[id]) return;
+  const nombre = charData[id].name || 'este personaje';
+  if(!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
+
+  // Quitar tarjeta del DOM
+  const card = cardElements[id] || document.querySelector(`[data-char-id="${id}"]`);
+  if(card) card.remove();
+  delete cardElements[id];
+  delete charData[id];
+
+  _saveToStorage();
+  closeChar();
+}
+
+// ── Accesorios editables ───────────────────────
+renderAccessories = function(accs){
+  const el = document.getElementById('cd-accessories');
+  el.innerHTML = `
+    <button class="back-btn" onclick="addAccessory()" style="margin-bottom:0.75rem">+ Accesorio</button>
+    <div id="acc-list" class="accessories-grid"></div>`;
+
+  const list = document.getElementById('acc-list');
+  accs.forEach((a, i) => {
+    const item = document.createElement('div');
+    item.className = 'accessory-item';
+    item.innerHTML = `
+      <span class="acc-icon" contenteditable="true" title="Editar emoji">${a.icon||'✨'}</span>
+      <div style="flex:1">
+        <div class="acc-name" contenteditable="true">${a.name||'Accesorio'}</div>
+        <div class="acc-desc" contenteditable="true">${a.desc||'Descripción'}</div>
+        <button class="back-btn" style="margin-top:4px;font-size:0.65rem;border-color:var(--red2);color:#e88"
+          onclick="removeAccessory(${i})">Eliminar</button>
+      </div>`;
+    list.appendChild(item);
+  });
+};
+
+function addAccessory(){
+  if(!currentChar) return;
+  charData[currentChar].accessories.push({ icon:'✨', name:'Nuevo Accesorio', desc:'Descripción' });
+  renderAccessories(charData[currentChar].accessories);
+}
+
+function removeAccessory(i){
+  if(!currentChar) return;
+  charData[currentChar].accessories.splice(i, 1);
+  renderAccessories(charData[currentChar].accessories);
+}
+
+// ── Cargar desde localStorage al inicio ───────
+window.addEventListener('load', () => {
+  document.querySelectorAll('#chars-grid .char-card').forEach(card => {
+    const onclick = card.getAttribute('onclick') || card.onclick?.toString() || '';
+    const match = onclick.match(/openChar\('([^']+)'\)/);
+    if(match){ card.dataset.charId = match[1]; cardElements[match[1]] = card; }
+  });
+  // La carga real la hace Firebase después de conectarse
+});
+</script>
+
+<!-- ===== FIREBASE ===== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC4XTaLumZWpCQpqrgYLzY2qP7zdmKag8I",
+  authDomain: "war-survival-55b74.firebaseapp.com",
+  databaseURL: "https://war-survival-55b74-default-rtdb.firebaseio.com",
+  projectId: "war-survival-55b74",
+  storageBucket: "war-survival-55b74.firebasestorage.app",
+  messagingSenderId: "347060539730",
+  appId: "1:347060539730:web:f48f53f06c50ecc3402a8b"
+};
+
+const app      = initializeApp(firebaseConfig);
+const db       = getDatabase(app);
+const storage  = getStorage(app);
+
+// ── Indicador de estado ──────────────────────────────────────────────────────
+function showSyncStatus(msg, type='info'){
+  let bar = document.getElementById('_sync-bar');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = '_sync-bar';
+    bar.style.cssText = `
+      position:fixed;bottom:1rem;right:1rem;z-index:99999;
+      font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;
+      padding:0.5rem 1rem;border-radius:4px;pointer-events:none;
+      transition:opacity 0.4s;border:1px solid`;
+    document.body.appendChild(bar);
+  }
+  const styles = {
+    info:    'background:rgba(13,11,8,0.95);color:#c9a84c;border-color:#3a2d1a',
+    ok:      'background:rgba(13,11,8,0.95);color:#6dbf7a;border-color:#2d5a34',
+    error:   'background:rgba(13,11,8,0.95);color:#e88;border-color:#8b1a1a',
+    loading: 'background:rgba(13,11,8,0.95);color:#c9a84c;border-color:#3a2d1a'
+  };
+  bar.style.cssText += ';' + styles[type];
+  bar.textContent = msg;
+  bar.style.opacity = '1';
+  if(type === 'ok') setTimeout(() => { bar.style.opacity = '0'; }, 2500);
+}
+
+// ── Guardar secciones (Historia, Tramas, Ideas, Clanes, Técnicas) ────────────
+async function fbSaveSection(key, data){
+  try {
+    await set(ref(db, 'sections/' + key), data);
+  } catch(e){ console.error('Firebase save error:', key, e); }
+}
+
+// Reemplaza el sectionSave original para que guarde en Firebase
+window.sectionSave = function(){
+  fbSaveSection('historia',  window._readSection('historia-timeline','historia'));
+  fbSaveSection('tramas',    window._readSection('tramas-grid','tramas'));
+  fbSaveSection('ideas',     window._readSection('ideas-grid','ideas'));
+  fbSaveSection('clanes',    window._readClanesSection());
+  fbSaveSection('tecnicas',  window._readTecnicasSection());
+};
+
+// ── Guardar personajes ───────────────────────────────────────────────────────
+window._saveToStorage = async function(){
+  showSyncStatus('Guardando…', 'loading');
+  try {
+    // Separar imágenes base64 del resto para guardarlas en Storage
+    const charDataClean = {};
+    const imageUploads  = [];
+
+    Object.entries(window.charData).forEach(([id, c]) => {
+      const clean = { ...c };
+      const imgs  = c.images || [null, null, null];
+      clean.images = [null, null, null]; // se sobreescriben con URLs
+
+      imgs.forEach((imgData, vi) => {
+        if(imgData && imgData.startsWith('data:')){
+          // Es base64 nuevo → subir a Storage
+          imageUploads.push({ id, vi, imgData });
+        } else if(imgData) {
+          // Ya es una URL de Storage → conservar
+          clean.images[vi] = imgData;
+        }
+      });
+      charDataClean[id] = clean;
+    });
+
+    // Subir imágenes nuevas a Firebase Storage
+    for(const { id, vi, imgData } of imageUploads){
+      const path     = `characters/${id}/view_${vi}`;
+      const imgRef   = sRef(storage, path);
+      const ext      = imgData.split(';')[0].split('/')[1] || 'jpeg';
+      await uploadString(imgRef, imgData, 'data_url');
+      const url      = await getDownloadURL(imgRef);
+      charDataClean[id].images[vi] = url;
+      // Actualizar charData local con la URL para no volver a subir
+      if(!window.charData[id].images) window.charData[id].images = [null,null,null];
+      window.charData[id].images[vi] = url;
+    }
+
+    await set(ref(db, 'characters'), charDataClean);
+    showSyncStatus('✔ Guardado', 'ok');
+  } catch(e){
+    showSyncStatus('✗ Error al guardar', 'error');
+    console.error('Firebase _saveToStorage error:', e);
+  }
+};
+
+// ── Eliminar imagen de Storage cuando se borra ───────────────────────────────
+const _origRemoveViewImage = window.removeViewImage;
+window.removeViewImage = async function(){
+  const c  = window.charData[window.currentChar]; if(!c) return;
+  const vi = window.currentView;
+  const url = c.images && c.images[vi];
+  if(url && url.startsWith('https://firebasestorage')){
+    try { await deleteObject(sRef(storage, `characters/${window.currentChar}/view_${vi}`)); } catch(e){}
+  }
+  if(c.images) c.images[vi] = null;
+  window.renderView();
+};
+
+// ── Cargar todo desde Firebase al inicio ────────────────────────────────────
+async function fbLoadAll(){
+  showSyncStatus('Cargando datos…', 'loading');
+  try {
+    // Secciones
+    const secSnap = await get(ref(db, 'sections'));
+    if(secSnap.exists()){
+      const s = secSnap.val();
+      window.renderHistoria( s.historia  || window.DEFAULT_HISTORIA );
+      window.renderCards('tramas-grid', s.tramas   || window.DEFAULT_TRAMAS);
+      window.renderCards('ideas-grid',  s.ideas    || window.DEFAULT_IDEAS);
+      window.renderClanes(              s.clanes   || window.DEFAULT_CLANES);
+      window.renderTecnicas(            s.tecnicas || window.DEFAULT_TECNICAS);
+    } else {
+      // Primera vez: cargar defaults
+      window.renderHistoria(window.DEFAULT_HISTORIA);
+      window.renderCards('tramas-grid', window.DEFAULT_TRAMAS);
+      window.renderCards('ideas-grid',  window.DEFAULT_IDEAS);
+      window.renderClanes(window.DEFAULT_CLANES);
+      window.renderTecnicas(window.DEFAULT_TECNICAS);
+    }
+
+    // Personajes
+    const charSnap = await get(ref(db, 'characters'));
+    if(charSnap.exists()){
+      const data = charSnap.val();
+      Object.keys(data).forEach(id => {
+        if(window.charData[id]){
+          Object.assign(window.charData[id], data[id]);
+          window._syncCard(id);
+        } else {
+          window.charData[id] = data[id];
+          window._addCardToGrid(id);
+        }
+      });
+    }
+
+    showSyncStatus('✔ Datos cargados', 'ok');
+  } catch(e){
+    showSyncStatus('✗ Error al cargar', 'error');
+    console.error('Firebase fbLoadAll error:', e);
+  }
+}
+
+// Exponer funciones de render y defaults al scope global para que Firebase las encuentre
+window.DEFAULT_HISTORIA = window.DEFAULT_HISTORIA || [];
+window.DEFAULT_TRAMAS   = window.DEFAULT_TRAMAS   || [];
+window.DEFAULT_IDEAS    = window.DEFAULT_IDEAS     || [];
+window.DEFAULT_CLANES   = window.DEFAULT_CLANES   || [];
+window.DEFAULT_TECNICAS = window.DEFAULT_TECNICAS  || [];
+
+// Auto-guardado de secciones cada 4 segundos (reemplaza el setInterval original)
+setInterval(() => window.sectionSave(), 4000);
+
+// Arrancar cuando el DOM esté listo
+window.addEventListener('load', fbLoadAll);
+</script>
+
+</body>
+</html>
